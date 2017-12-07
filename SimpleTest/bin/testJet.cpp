@@ -38,19 +38,20 @@ int main (int argc, char* argv[])
   std::vector<std::string> inputFiles = parser.stringVector("inputFiles");
   
   edm::InputTag jetLabel ("slimmedJets");
-
+  edm::InputTag packedCdLabel("packedPFCandidates");
+  edm::InputTag lostTracksLabel("lostTracks"); 
 
   auto avgHits  = [](auto jet)->float {
     int nhits=0;
     int cands=0;
     assert(jet.numberOfDaughters());
     for (auto i=0U; i<jet.numberOfDaughters(); ++i) {
-      if (jet.daughter(i))
-        std::cout << typeid(*jet.daughter(i)).name() << std::endl;
-      auto pd = dynamic_cast<pat::PackedCandidate const *>(jet.daughter(i));
-      if (!pd) continue;
-      //auto const & d = reinterpret_cast<pat::PackedCandidate const&>(*jet.daughter(i));
-      auto const & d = *pd;
+//      if (jet.daughterPtr(i).get())
+//        std::cout << typeid(*jet.daughterPtr(i).get()).name() << std::endl;
+//      auto pd = dynamic_cast<pat::PackedCandidate const *>(jet.daughterPtr(i).get());
+//      if (!pd) continue;
+//      auto const & d = *pd;
+      auto const & d = reinterpret_cast<pat::PackedCandidate const&>(*jet.daughterPtr(i).get());
       if (d.charge() != 0 && d.hasTrackDetails()) {
         nhits += d.pixelLayersWithMeasurement();
         ++cands;
@@ -74,7 +75,14 @@ int main (int argc, char* argv[])
     std::cout << "opeing file " << file << " with " << ev.size() << " events" << std::endl;
 
     for(ev.toBegin(); !ev.atEnd(); ++ev){
-      edm::Handle<std::vector< pat::Jet>> jetHandle;
+      edm::Handle<std::vector<pat::Jet>> jetHandle;
+      //edm::Handle<std::vector<pat::PackedCandidate>> pkCandsH; 
+      //edm::Handle<std::vector<pat::PackedCandidate>> lostTracksH;
+
+      //ev.getByLabel (packedCdLabel,pkCandsH);
+      //ev.getByLabel (lostTracksLabel,lostTracksH);
+      //*pkCandsH;
+      //*lostTracksH;
       ev.getByLabel (jetLabel, jetHandle);
       assert ( jetHandle.isValid() );  
       for (auto const & jet : (*jetHandle)) {
